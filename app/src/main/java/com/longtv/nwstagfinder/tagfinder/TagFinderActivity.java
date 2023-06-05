@@ -11,12 +11,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
@@ -42,6 +44,7 @@ import com.longtv.nwstagfinder.ModelBase;
 import com.longtv.nwstagfinder.R;
 import com.longtv.nwstagfinder.WeakHandler;
 import com.longtv.nwstagfinder.rfid.DeviceListActivity;
+import com.longtv.nwstagfinder.utils.PermissionUtility;
 import com.uk.tsl.rfid.asciiprotocol.AsciiCommander;
 import com.uk.tsl.rfid.asciiprotocol.device.ConnectionState;
 import com.uk.tsl.rfid.asciiprotocol.device.IAsciiTransport;
@@ -131,7 +134,15 @@ public class TagFinderActivity extends AppCompatActivity {
         mResultTextView = (TextView) findViewById(R.id.resultTextView);
         mResultScrollView = (ScrollView) findViewById(R.id.resultScrollView);
 
+        //at first , check permission
+        if (!PermissionUtility.hasPermission(this)) {
+            PermissionUtility.requestPermission(this, 1);
+        } else {
+            setupTagFinderHandler();
+        }
+    }
 
+    private void setupTagFinderHandler() {
         // Ensure the shared instance of AsciiCommander exists
         AsciiCommander.createSharedInstance(getApplicationContext());
 
@@ -199,16 +210,30 @@ public class TagFinderActivity extends AppCompatActivity {
                 });
             }
         });
+
+        if (!(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+//            if (Build.VERSION.SDK_INT >= 31 ){
+//                startActivity(
+//                        new Intent(
+//                                android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+//                                Uri.fromParts("package", getPackageName(), null)
+//                        )
+//                );
+//            }
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        // Remove observers for changes
-        ReaderManager.sharedInstance().getReaderList().readerAddedEvent().removeObserver(mAddedObserver);
-        ReaderManager.sharedInstance().getReaderList().readerUpdatedEvent().removeObserver(mUpdatedObserver);
-        ReaderManager.sharedInstance().getReaderList().readerRemovedEvent().removeObserver(mRemovedObserver);
+        if (ReaderManager.sharedInstance() != null && ReaderManager.sharedInstance().getReaderList() != null) {
+            // Remove observers for changes
+            ReaderManager.sharedInstance().getReaderList().readerAddedEvent().removeObserver(mAddedObserver);
+            ReaderManager.sharedInstance().getReaderList().readerUpdatedEvent().removeObserver(mUpdatedObserver);
+            ReaderManager.sharedInstance().getReaderList().readerRemovedEvent().removeObserver(mRemovedObserver);
+        }
     }
 
     @Override
@@ -237,8 +262,10 @@ public class TagFinderActivity extends AppCompatActivity {
      */
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        boolean isConnected = getCommander().isConnected();
-        mDisconnectMenuItem.setEnabled(isConnected);
+        if (getCommander() != null) {
+            boolean isConnected = getCommander().isConnected();
+            mDisconnectMenuItem.setEnabled(isConnected);
+        }
 
         mConnectMenuItem.setEnabled(true);
         mConnectMenuItem.setTitle((mReader != null && mReader.isConnected() ? R.string.change_reader_menu_item_text : R.string.connect_reader_menu_item_text));
@@ -290,29 +317,43 @@ public class TagFinderActivity extends AppCompatActivity {
     public synchronized void onPause() {
         super.onPause();
 
-        mModel.setEnabled(false);
-
-        // Register to receive notifications from the AsciiCommander
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mCommanderMessageReceiver);
-
-        // Disconnect from the reader to allow other Apps to use it
-        // unless pausing when USB device attached or using the DeviceListActivity to select a Reader
-        if (!mIsSelectingReader && !ReaderManager.sharedInstance().didCauseOnPause() && mReader != null) {
-            mReader.disconnect();
+        if (mModel != null) {
+            mModel.setEnabled(false);
         }
 
-        ReaderManager.sharedInstance().onPause();
+        if (mCommanderMessageReceiver != null) {
+            // Register to receive notifications from the AsciiCommander
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(mCommanderMessageReceiver);
+        }
+
+        if (ReaderManager.sharedInstance() != null) {
+            // Disconnect from the reader to allow other Apps to use it
+            // unless pausing when USB device attached or using the DeviceListActivity to select a Reader
+            if (!mIsSelectingReader && !ReaderManager.sharedInstance().didCauseOnPause() && mReader != null) {
+                mReader.disconnect();
+            }
+
+            ReaderManager.sharedInstance().onPause();
+        }
     }
 
     @Override
     public synchronized void onResume() {
         super.onResume();
 
-        mModel.setEnabled(true);
+        if (mModel != null) {
+            mModel.setEnabled(true);
+        }
 
+        if (mCommanderMessageReceiver == null) {
+            return;
+        }
         // Register to receive notifications from the AsciiCommander
         LocalBroadcastManager.getInstance(this).registerReceiver(mCommanderMessageReceiver, new IntentFilter(AsciiCommander.STATE_CHANGED_NOTIFICATION));
 
+        if (ReaderManager.sharedInstance() == null) {
+            return;
+        }
         // Remember if the pause/resume was caused by ReaderManager - this will be cleared when ReaderManager.onResume() is called
         boolean readerManagerDidCauseOnPause = ReaderManager.sharedInstance().didCauseOnPause();
 
@@ -581,8 +622,10 @@ public class TagFinderActivity extends AppCompatActivity {
         public void afterTextChanged(Editable s) {
             String value = s.toString();
 
-            mModel.setTargetTagEpc(value);
-            UpdateUI();
+            if(mModel!=null){
+                mModel.setTargetTagEpc(value);
+                UpdateUI();
+            }
         }
     };
 
@@ -633,6 +676,27 @@ public class TagFinderActivity extends AppCompatActivity {
                     }
                 }
                 break;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            boolean allPermissionsGranted = true;
+
+            for (int grantResult : grantResults) {
+                if (grantResult != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false;
+                    break;
+                }
+            }
+
+            if (grantResults.length > 0 && allPermissionsGranted) {
+                setupTagFinderHandler();
+            } else {
+                Toast.makeText(this, "Authorization denied. The application cannot work.", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -710,8 +774,10 @@ public class TagFinderActivity extends AppCompatActivity {
                     // app.
 
                     // Update the ReaderList which will add any unknown reader, firing events appropriately
-                    ReaderManager.sharedInstance().updateList();
-                    mBluetoothPermissionsPrompt.setVisibility(View.GONE);
+                    if (ReaderManager.sharedInstance() != null) {
+                        ReaderManager.sharedInstance().updateList();
+                        mBluetoothPermissionsPrompt.setVisibility(View.GONE);
+                    }
                 } else {
                     // Explain to the user that the feature is unavailable because the
                     // features requires a permission that the user has denied. At the
