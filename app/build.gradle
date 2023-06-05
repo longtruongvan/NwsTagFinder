@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.longtv.nwstagfinder'
-    compileSdk 33
+    compileSdkVersion 33
 
     defaultConfig {
         applicationId "com.longtv.nwstagfinder"
-        minSdk 24
-        targetSdk 33
+        minSdkVersion 24
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
