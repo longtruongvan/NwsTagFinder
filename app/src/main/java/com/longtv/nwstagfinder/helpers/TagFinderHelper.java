@@ -32,7 +32,7 @@ import com.uk.tsl.utils.StringHelper;
 
 public class TagFinderHelper {
     private static TagFinderHelper instance;
-    private static Reader mReader = null;
+    public static Reader mReader = null;
     public static boolean mIsSelectingReader = false;
     // Debugging
     private static final String TAG = "TagFinderHelper";
@@ -159,7 +159,7 @@ public class TagFinderHelper {
     /**
      * @return the current AsciiCommander
      */
-    private static AsciiCommander getCommander() {
+    public static AsciiCommander getCommander() {
         return AsciiCommander.sharedInstance();
     }
 
@@ -313,7 +313,7 @@ public class TagFinderHelper {
         tagFinderCallBack.rssiIntroduceCallBack(instructions);
     }
 
-    private static synchronized void onResume(Context context) {
+    public static synchronized void onResume(Context context) {
         if (mModel != null) {
             mModel.setEnabled(true);
         }
@@ -346,7 +346,7 @@ public class TagFinderHelper {
         updateUI();
     }
 
-    private static synchronized void onPause(Context context) {
+    public static synchronized void onPause(Context context) {
         if (mModel != null) {
             mModel.setEnabled(false);
         }
@@ -367,7 +367,7 @@ public class TagFinderHelper {
         }
     }
 
-    private static void onDestroy() {
+    public static void onDestroy() {
         if (ReaderManager.sharedInstance() != null && ReaderManager.sharedInstance().getReaderList() != null) {
             // Remove observers for changes
             ReaderManager.sharedInstance().getReaderList().readerAddedEvent().removeObserver(mAddedObserver);
