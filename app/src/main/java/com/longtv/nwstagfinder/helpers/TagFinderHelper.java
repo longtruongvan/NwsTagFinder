@@ -381,16 +381,16 @@ public class TagFinderHelper {
 
         // If already connected to a different reader then disconnect it
         if (mReader != null) {
-            if (action == DeviceListActivity.DEVICE_CHANGE || action == DeviceListActivity.DEVICE_DISCONNECT) {
+            if (action == DeviceListHelper.DEVICE_CHANGE || action == DeviceListHelper.DEVICE_DISCONNECT) {
                 mReader.disconnect();
-                if (action == DeviceListActivity.DEVICE_DISCONNECT) {
+                if (action == DeviceListHelper.DEVICE_DISCONNECT) {
                     mReader = null;
                 }
             }
         }
 
         // Use the Reader found
-        if (action == DeviceListActivity.DEVICE_CHANGE || action == DeviceListActivity.DEVICE_CONNECT) {
+        if (action == DeviceListHelper.DEVICE_CHANGE || action == DeviceListHelper.DEVICE_CONNECT) {
             mReader = chosenReader;
             getCommander().setReader(mReader);
         }

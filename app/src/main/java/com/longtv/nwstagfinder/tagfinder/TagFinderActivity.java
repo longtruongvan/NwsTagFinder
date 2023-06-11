@@ -1,8 +1,5 @@
 package com.longtv.nwstagfinder.tagfinder;
 
-import static com.longtv.nwstagfinder.rfid.DeviceListActivity.EXTRA_DEVICE_ACTION;
-import static com.longtv.nwstagfinder.rfid.DeviceListActivity.EXTRA_DEVICE_INDEX;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -44,6 +41,7 @@ import com.longtv.nwstagfinder.BuildConfig;
 import com.longtv.nwstagfinder.ModelBase;
 import com.longtv.nwstagfinder.R;
 import com.longtv.nwstagfinder.WeakHandler;
+import com.longtv.nwstagfinder.helpers.DeviceListHelper;
 import com.longtv.nwstagfinder.helpers.TagFinderHelper;
 import com.longtv.nwstagfinder.interfaces.TagFinderCallBack;
 import com.longtv.nwstagfinder.rfid.DeviceListActivity;
@@ -224,13 +222,13 @@ public class TagFinderActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case DeviceListActivity.SELECT_DEVICE_REQUEST:
+            case DeviceListHelper.SELECT_DEVICE_REQUEST:
                 // When DeviceListActivity returns with a device to connect
                 if (resultCode == Activity.RESULT_OK) {
-                    int readerIndex = data.getExtras().getInt(EXTRA_DEVICE_INDEX);
+                    int readerIndex = data.getExtras().getInt(DeviceListHelper.EXTRA_DEVICE_INDEX);
                     Reader chosenReader = ReaderManager.sharedInstance().getReaderList().list().get(readerIndex);
 
-                    int action = data.getExtras().getInt(EXTRA_DEVICE_ACTION);
+                    int action = data.getExtras().getInt(DeviceListHelper.EXTRA_DEVICE_ACTION);
 
                     tagFinderHelper.connectDevice(readerIndex, action);
                 }
@@ -302,9 +300,9 @@ public class TagFinderActivity extends AppCompatActivity {
                 }
                 Intent selectIntent = new Intent(this, DeviceListActivity.class);
                 if (index >= 0) {
-                    selectIntent.putExtra(EXTRA_DEVICE_INDEX, index);
+                    selectIntent.putExtra(DeviceListHelper.EXTRA_DEVICE_INDEX, index);
                 }
-                startActivityForResult(selectIntent, DeviceListActivity.SELECT_DEVICE_REQUEST);
+                startActivityForResult(selectIntent, DeviceListHelper.SELECT_DEVICE_REQUEST);
                 return true;
 
             case R.id.disconnect_reader_menu_item:

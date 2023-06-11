@@ -1,18 +1,16 @@
 package com.longtv.nwstagfinder.helpers;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.util.Log;
-import android.view.View;
 
 import androidx.core.content.ContextCompat;
 
+import com.longtv.nwstagfinder.interfaces.ListDeviceCallBack;
 import com.uk.tsl.rfid.asciiprotocol.device.ObservableReaderList;
 import com.uk.tsl.rfid.asciiprotocol.device.Reader;
 import com.uk.tsl.rfid.asciiprotocol.device.ReaderManager;
@@ -40,14 +38,16 @@ public class DeviceListHelper {
 
     public static ObservableReaderList mReaders;
     public static Reader mSelectedReader = null;
+    private static ListDeviceCallBack listDeviceCallBack;
 
+    public static int selectedRowIndex = -1;
 
     private static final Observable.Observer<Reader> mAddedObserver = (observable, reader) -> {
         if (D) {
             Log.d(TAG, "Reader arrived");
         }
         int readerIndex = ReaderManager.sharedInstance().getReaderList().list().indexOf(reader);
-//            mAdapter.notifyItemInserted(readerIndex);
+        listDeviceCallBack.notifyItemInserted(readerIndex);
 
         // If the new Reader is connected over USB then this will be auto selected and
         if (reader.hasTransportOfType(TransportType.USB)) {
@@ -61,10 +61,10 @@ public class DeviceListHelper {
         }
         int readerIndex = ReaderManager.sharedInstance().getReaderList().list().indexOf(reader);
         // A Reader has changed - check to see if it is the currently selected Reader and no longer connected
-//            if (!reader.isConnected() && mAdapter.getSelectedRowIndex() == readerIndex) {
-//                mAdapter.setSelectedRowIndex(-1);
-//            }
-//            mAdapter.notifyItemChanged(readerIndex);
+            if (!reader.isConnected() && selectedRowIndex == readerIndex) {
+                listDeviceCallBack.setSelectedRowIndex(-1);
+            }
+            listDeviceCallBack.notifyItemChanged(readerIndex);
     };
 
     private static final Observable.Observer<Reader> mRemovedObserver = (observable, reader) -> {
@@ -72,10 +72,10 @@ public class DeviceListHelper {
             Log.d(TAG, "Reader Removed");
         }
         int readerIndex = ReaderManager.sharedInstance().getReaderList().list().indexOf(reader);
-//            if (mAdapter.getSelectedRowIndex() == readerIndex) {
-//                mAdapter.setSelectedRowIndex(-1);
-//            }
-//            mAdapter.notifyItemRemoved(readerIndex);
+            if (selectedRowIndex == readerIndex) {
+                listDeviceCallBack.setSelectedRowIndex(-1);
+            }
+            listDeviceCallBack.notifyItemRemoved(readerIndex);
     };
 
     private DeviceListHelper() {
@@ -87,9 +87,9 @@ public class DeviceListHelper {
     }
 
 
-    public static void initialize(Context context) {
+    public static void initialize(Context context, ListDeviceCallBack callBack) {
         mReaders = ReaderManager.sharedInstance().getReaderList();
-
+        listDeviceCallBack = callBack;
         // Configure the ReaderManager when necessary
         ReaderManager.create(context);
 
@@ -162,14 +162,7 @@ public class DeviceListHelper {
 
 
     private static void returnSelectedReader(int readerIndex, int action) {
-        // Create the result Intent
-        Intent intent = new Intent();
-        intent.putExtra(EXTRA_DEVICE_INDEX, readerIndex);
-        intent.putExtra(EXTRA_DEVICE_ACTION, action);
-
-        // Set result and finish this Activity
-//        setResult(Activity.RESULT_OK, intent);
-//        finish();
+        listDeviceCallBack.returnSelectedReader(readerIndex, action);
     }
 
     public static void onResume(Context context) {
@@ -184,20 +177,13 @@ public class DeviceListHelper {
             isPromptVisible = (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED
                     || ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADMIN) != PackageManager.PERMISSION_GRANTED);
         }
-//        mBluetoothPermissionsPrompt.setVisibility( isPromptVisible ? View.VISIBLE : View.GONE);
+        listDeviceCallBack.hideBluetoothPermissionsPrompt(isPromptVisible);
 
 
         // The Activity may start with a reader already connected (perhaps by another App)
         // Update the ReaderList which will add any unknown reader, firing events appropriately
         ReaderManager.sharedInstance().updateList();
-//        if(mAdapter!=null)// updateList
-//        {
-//            // Reapply the selected Reader in case the Reader list has been changed while paused
-//            mAdapter.setSelectedRowIndex(-1);
-//            mAdapter.notifyDataSetChanged();
-//            int readerIndex = ReaderManager.sharedInstance().getReaderList().list().indexOf(mSelectedReader);
-//            mAdapter.setSelectedRowIndex(readerIndex);
-//        }
+        listDeviceCallBack.updateReaderListOnResume();
     }
 
     public static void onPause() {
