@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
@@ -89,7 +90,10 @@ public class TagFinderActivity extends AppCompatActivity {
         setContentView(R.layout.activity_tag_finder);
 
         mBluetoothPermissionsPrompt = (TextView) findViewById(R.id.bluetooth_permissions_prompt);
-
+        // Set up the target EPC EditText
+        mTargetTagEditText = (EditText) findViewById(R.id.targetTagEditText);
+        mTargetTagEditText.addTextChangedListener(mTargetTagEditTextChangedListener);
+        mTargetTagEditText.setOnFocusChangeListener(mTargetTagFocusChangedListener);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -400,4 +404,33 @@ public class TagFinderActivity extends AppCompatActivity {
                 }
             });
 
+
+    private TextWatcher mTargetTagEditTextChangedListener = new TextWatcher() {
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+        }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            String value = s.toString();
+
+            TagFinderHelper.searchTagHex(value);
+        }
+    };
+
+    private View.OnFocusChangeListener mTargetTagFocusChangedListener =
+            new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (!hasFocus) {
+//                        mModel.setTargetTagEpc(mTargetTagEditText.getText().toString());
+//                        mModel.updateTarget();
+                    }
+                }
+            };
 }
