@@ -7,6 +7,11 @@ public interface TagFinderCallBack {
     void rssiIntroduceCallBack(String introduce);
     void countMessageCallBack(String count);
 
+    void messageStartWithERCallBack(String message);
+    /** Update BarCodeResultAdapter */
+    void messageStartWithBCCallBack(String message);
+    /** Update TranspondersAdapter */
+    void messageTranspondersCallback(String message);
 //    private EditText mTargetTagEditText;
 //
 //    private TextView mRssiTextView;

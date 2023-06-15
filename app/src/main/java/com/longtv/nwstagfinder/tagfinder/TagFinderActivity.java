@@ -161,6 +161,25 @@ public class TagFinderActivity extends AppCompatActivity {
                 public void countMessageCallBack(String count) {
                     mCountTextView.setText(count);
                 }
+
+                @Override
+                public void messageStartWithERCallBack(String message) {
+//                    t.mResultTextView.setText( message.substring(3));
+//                    t.mResultTextView.setBackgroundColor(0xD0FFFFFF);
+                }
+
+                @Override
+                public void messageStartWithBCCallBack(String message) {
+//                    t.mBarcodeResultsListView.setVisibility(View.VISIBLE);
+//                    t.mBarcodeResultsArrayAdapter.add(message);
+//                    t.scrollBarcodeListViewToBottom();
+                }
+
+                @Override
+                public void messageTranspondersCallback(String message) {
+//                    t.mResultsArrayAdapter.add(message);
+//                    t.scrollResultsListViewToBottom();
+                }
             });
         }
     }
@@ -215,6 +234,25 @@ public class TagFinderActivity extends AppCompatActivity {
                     @Override
                     public void countMessageCallBack(String count) {
                         mCountTextView.setText(count);
+                    }
+
+                    @Override
+                    public void messageStartWithERCallBack(String message) {
+//                        t.mResultTextView.setText( message.substring(3));
+//                        t.mResultTextView.setBackgroundColor(0xD0FFFFFF);
+                    }
+
+                    @Override
+                    public void messageStartWithBCCallBack(String message) {
+//                        t.mBarcodeResultsListView.setVisibility(View.VISIBLE);
+//                        t.mBarcodeResultsArrayAdapter.add(message);
+//                        t.scrollBarcodeListViewToBottom();
+                    }
+
+                    @Override
+                    public void messageTranspondersCallback(String message) {
+//                        t.mResultsArrayAdapter.add(message);
+//                        t.scrollResultsListViewToBottom();
                     }
                 });
             } else {

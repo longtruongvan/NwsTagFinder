@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -84,6 +85,19 @@ public class TagFinderHelper {
 
                     case ModelBase.MESSAGE_NOTIFICATION:
                         String message = (String) msg.obj;
+                        if (message.startsWith("ER:")) {
+                            tagFinderCallBack.messageStartWithERCallBack(message.substring(3));
+                            //boolean isConnected = getCommander().isConnected();
+                            //TODO: configure UI control state
+                        } else if (message.startsWith("BC:")) {
+                            tagFinderCallBack.messageStartWithBCCallBack(message);
+                            //boolean isConnected = getCommander().isConnected();
+                            //TODO: configure UI control state
+                        }else{
+                            tagFinderCallBack.messageTranspondersCallback(message);
+                            //boolean isConnected = getCommander().isConnected();
+                            //TODO: configure UI control state
+                        }
                         appendMessage(message);
                         break;
 
